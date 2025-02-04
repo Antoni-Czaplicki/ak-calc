@@ -197,7 +197,7 @@
 
         result = fromDecimal(result, base, isComplement, bitLength);
 
-        while (result.length > 1 && ((result[0] === "0" && result[1] === "0") || (result[0] === (toBase - 1).toString()) && result[1] === (toBase - 1).toString())) {
+        while (result.length > 1 && ((result[0] === "0" && result[1] === "0") || (result[0] === (base - 1).toString()) && result[1] === (base - 1).toString())) {
             result = result.slice(1);
         }
 
