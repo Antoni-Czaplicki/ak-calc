@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator Konwersji Liczb</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body data-bs-theme="dark">
+<div class="container mt-5">
+    <h2 class="text-center mb-4">Kalkulator Konwersji Liczb</h2>
+
+    <div class="card p-4">
+        <div class="mb-3">
+            <label for="number" class="form-label">Liczba:</label>
+            <input type="text" class="form-control" id="number" placeholder="Wpisz liczbę">
+        </div>
+        <div class="mb-3">
+            <label for="fromBase" class="form-label">Z bazy:</label>
+            <input type="number" class="form-control" id="fromBase" placeholder="Np. 2">
+        </div>
+        <div class="mb-3">
+            <label for="toBase" class="form-label">Do bazy:</label>
+            <input type="number" class="form-control" id="toBase" placeholder="Np. 10">
+        </div>
+        <div class="mb-3">
+            <label for="conversionType" class="form-label">Typ konwersji:</label>
+            <select class="form-control" id="conversionType">
+                <option value="normal">Normalna konwersja</option>
+                <option value="toComplement">Do uzupełnienia</option>
+                <option value="fromComplement">Z uzupełnienia</option>
+                <option value="complementToComplement">Uzupełnienie do uzupełnienia</option>
+            </select>
+        </div>
+        <button class="btn btn-primary w-100" onclick="convertNumber()">Konwertuj</button>
+        <h4 class="mt-3">Wynik: <span id="result"></span></h4>
+    </div>
+
+    <h2 class="text-center mt-5">Podstawowe Operacje</h2>
+    <div class="card p-4">
+        <div class="mb-3">
+            <label for="num1" class="form-label">Liczba 1:</label>
+            <input type="text" class="form-control" id="num1" placeholder="Wpisz pierwszą liczbę">
+        </div>
+        <div class="mb-3">
+            <label for="num2" class="form-label">Liczba 2:</label>
+            <input type="text" class="form-control" id="num2" placeholder="Wpisz drugą liczbę">
+        </div>
+        <div class="mb-3">
+            <label for="base" class="form-label">Podstawa:</label>
+            <input type="number" class="form-control" id="base" placeholder="Np. 2">
+        </div>
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" id="isComplementCalc">
+            <label class="form-check-label" for="isComplementCalc">Liczby są w uzupełnieniu</label>
+        </div>
+        <div class="mb-3">
+            <label for="operation" class="form-label">Operacja:</label>
+            <select class="form-control" id="operation">
+                <option value="add">Dodawanie</option>
+                <option value="subtract">Odejmowanie</option>
+                <option value="multiply">Mnożenie</option>
+                <option value="divide">Dzielenie</option>
+            </select>
+        </div>
+        <button class="btn btn-secondary w-100" onclick="performOperation()">Oblicz</button>
+        <h4 class="mt-3">Wynik: <span id="operationResult"></span></h4>
+    </div>
+</div>
+
+<script>
+    function toDecimal(numStr, base, isComplement) {
+        if (!isComplement) {
+            return parseInt(numStr, base);
+        }
+
+        let bitLength = numStr.replace("-", "").length;
+        let maxValue = Math.pow(base, bitLength);
+        let decValue = parseInt(numStr, base);
+
+        if (decValue >= maxValue / 2) { // Sprawdzenie, czy liczba jest ujemna
+            decValue -= maxValue;
+        }
+
+        return decValue;
+    }
+
+    function fromDecimal(num, base, isComplement, bitLength = 0) {
+        if (!isComplement) {
+            return num.toString(base).toUpperCase();
+        }
+
+        let maxValue = Math.pow(base, bitLength);
+        if (num < 0) {
+            num = maxValue + num; // Convert negative number to complement form
+        }
+
+        const digits = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        let result = "";
+        let absNum = Math.abs(num);
+
+        do {
+            result = digits[absNum % base] + result;
+            absNum = Math.floor(absNum / base);
+        } while (absNum > 0);
+
+        if (result.length < bitLength) {
+            result = result.padStart(bitLength, '0'); // Ensure proper bit length
+        }
+
+        return result || "0";
+    }
+
+    function convertNumber() {
+        let number = document.getElementById("number").value;
+        let fromBase = parseInt(document.getElementById("fromBase").value);
+        let toBase = parseInt(document.getElementById("toBase").value);
+        let conversionType = document.getElementById("conversionType").value;
+
+        if (isNaN(fromBase) || isNaN(toBase) || !number) {
+            alert("Wprowadź poprawne dane");
+            return;
+        }
+
+        let isComplement = (conversionType === "fromComplement" || conversionType === "complementToComplement");
+        let decimalValue = toDecimal(number, fromBase, isComplement);
+        console.log(decimalValue);
+        let bitLength = number.replace("-", "").length * 4;
+
+        let result;
+        switch (conversionType) {
+            case "normal":
+                result = fromDecimal(decimalValue, toBase, false);
+                break;
+            case "toComplement":
+                result = fromDecimal(decimalValue, toBase, true, bitLength);
+                break;
+            case "fromComplement":
+                result = fromDecimal(decimalValue, toBase, false);
+                break;
+            case "complementToComplement":
+                result = fromDecimal(decimalValue, toBase, true, bitLength);
+                break;
+            default:
+                result = "Nieznany typ konwersji";
+        }
+
+        console.log(result);
+
+        while (result.length > 1 && ((result[0] === "0" && result[1] === "0") || (result[0] === (toBase - 1).toString()) && result[1] === (toBase - 1).toString())) {
+            result = result.slice(1);
+        }
+
+        document.getElementById("result").innerText = result;
+    }
+
+
+    function performOperation() {
+        let num1 = document.getElementById("num1").value;
+        let num2 = document.getElementById("num2").value;
+        let base = parseInt(document.getElementById("base").value);
+        let isComplement = document.getElementById("isComplementCalc").checked;
+        let operation = document.getElementById("operation").value;
+
+        if (isNaN(base) || !num1 || !num2) {
+            alert("Wprowadź poprawne dane");
+            return;
+        }
+
+        let bitLength = 0
+        let decNum1 = toDecimal(num1, base, isComplement);
+        let decNum2 = toDecimal(num2, base, isComplement);
+
+        let result;
+        switch (operation) {
+            case "add":
+                result = decNum1 + decNum2;
+                bitLength = Math.max(num1.replace("-", "").length, num2.replace("-", "").length) + 1;
+                break;
+            case "subtract":
+                result = decNum1 - decNum2;
+                bitLength = Math.max(num1.replace("-", "").length, num2.replace("-", "").length) + 1;
+                break;
+            case "multiply":
+                result = decNum1 * decNum2;
+                bitLength = num1.replace("-", "").length + num2.replace("-", "").length;
+                break;
+            case "divide":
+                result = decNum1 / decNum2;
+                bitLength = num1.replace("-", "").length;
+                break;
+            default:
+                result = "Nieznana operacja";
+        }
+
+        result = Math.floor(result);
+
+        result = fromDecimal(result, base, isComplement, bitLength);
+
+        while (result.length > 1 && ((result[0] === "0" && result[1] === "0") || (result[0] === (toBase - 1).toString()) && result[1] === (toBase - 1).toString())) {
+            result = result.slice(1);
+        }
+
+        document.getElementById("operationResult").innerText = result;
+    }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
